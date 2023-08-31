@@ -1,31 +1,31 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using System.Security.Cryptography.X509Certificates;
 using System.DirectoryServices.Protocols;
+
 using Newtonsoft.Json;
-var ldapConifuration = new LdapConifuration(){
-    Server = "ldap://ldap.cencosud.corp",
-    PortNumber = "636",
-    FileCer = "C:\\Users\\jose.romero\\Documents\\certificado\\ldap.cencosud.corp.cer",
-    BindDn = "CN=Jose Romero,OU",
-    BindPassword = "password"
+var ldapConf = new LdapConfinguration(){
+    Server = "LDAP://ldap.cencosud.corp", // LDAP con mayuscula al inicio
+    FileCer = "C:\\ldap.cencosud.corp.cer",
+    BindDn = "Jose_Romero",
+    BindPassword = "lalala1234"
 };
 var usuario = "jose.romero";
 var password = "password";
 Console.WriteLine("Hello, World!");
 // Establecer el certificado de seguridad
-X509Certificate2 cert = new X509Certificate2(ldapConifuration.FileCer);
+X509Certificate2 cert = new X509Certificate2(ldapConf.FileCer);
 // Agregar el certificado al almacen de certificados
-
-var ldapConnection = new LdapConnection( new LdapDirectoryIdentifier(ldapConifuration.Server));
+var ldapConnection = new LdapConnection( new LdapDirectoryIdentifier(ldapConf.Server, ldapConf.PortNumber),
+new System.Net.NetworkCredential(ldapConf.BindDn, ldapConf.BindPassword)
+,AuthType.Basic);
 ldapConnection.SessionOptions.SecureSocketLayer = true;
 ldapConnection.SessionOptions.VerifyServerCertificate = new VerifyServerCertificateCallback((con, cer) => true);
 ldapConnection.ClientCertificates.Add(cert);
 // Establecer la versión de LDAP a 3 para no tener el error
 ldapConnection.SessionOptions.ProtocolVersion = 3;
-ldapConnection.AuthType = AuthType.Basic; // Opcional: establecer el tipo de autenticación
 
-ldapConnection.Bind(new System.Net.NetworkCredential(ldapConifuration.BindDn, ldapConifuration.BindPassword));
-Console.WriteLine($"Conneccion establecida con el servidor: {ldapConifuration.Server}");
+ldapConnection.Bind();
+Console.WriteLine($"Conneccion establecida con el servidor: {ldapConf.Server}");
 
 string search_base = "dc=cencosud,dc=corp";
 string search_filter = $"(sAMAccountName={usuario})";
@@ -46,9 +46,9 @@ Console.WriteLine("TERMINADO");
 
 
 
-public class LdapConifuration{
+public class LdapConfinguration{
         public string Server { get; set; } = "";
-        public string PortNumber { get; set; } = "";
+        public int PortNumber { get; set; } = 636; // El puerto predefinido de ldap es 636
         public string FileCer { get; set; } = "";
         public string BindDn { get; set; } = "";
         public string BindPassword { get; set; } = "";
